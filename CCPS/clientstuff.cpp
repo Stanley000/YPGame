@@ -2,6 +2,14 @@
 #include "mainwindow.h"
 #include "functions.h"
 
+/*!
+ * \brief clientStuff::clientStuff
+ * \param hostAddress
+ * \param portNumber
+ * \param parent
+ * Создание класса обработки работы с клиентким приложением
+ */
+
 clientStuff::clientStuff(const QString hostAddress, int portNumber, QObject *parent) : QObject(parent), m_nNextBlockSize(0)
 {
     status = false;
@@ -16,6 +24,10 @@ clientStuff::clientStuff(const QString hostAddress, int portNumber, QObject *par
     timeoutTimer->setSingleShot(true);
     connect(timeoutTimer, &QTimer::timeout, this, &clientStuff::connectionTimeout);
 }
+
+/*!
+ * \brief clientStuff::connect2host
+ */
 
 void clientStuff::connect2host()
 {
@@ -35,11 +47,19 @@ void clientStuff::connectionTimeout()
     }
 }
 
+/*!
+ * \brief clientStuff::connected Проверка статуса подключенияя между клиентом и сервером
+ */
+
 void clientStuff::connected()
 {
     status = true;
     emit statusChanged(status);
 }
+
+/*!
+ * \brief clientStuff::readyRead Чтение сообщений поступающие от сервера
+ */
 
 void clientStuff::readyRead()
 {
@@ -95,6 +115,10 @@ void clientStuff::readyRead()
             }
       }
 }
+
+/*!
+ * \brief clientStuff::closeConnection Выполняется при отключении от сервера
+ */
 
 void clientStuff::closeConnection()
 {

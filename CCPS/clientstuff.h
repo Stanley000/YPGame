@@ -22,9 +22,9 @@ public slots:
     void connect2host();
 
 signals:
-    void statusChanged(bool);
-    void hasReadSome(QString msg);
-    void hasReadMap(QMap<int, QString> map);
+    void statusChanged(bool);/// Статус подключения к серверу
+    void hasReadSome(QString msg);/// Получение сообщения с сервера
+    void hasReadMap(QMap<int, QString> map);/// Получение QMap лобби с сервера
 
 private slots:
     void readyRead();

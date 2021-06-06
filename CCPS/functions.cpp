@@ -1,6 +1,5 @@
 #include "functions.h"
 
-
 QString Proc(QString message)
 {
     QString getMesProc = message.section("&", 0, 0);
@@ -25,15 +24,40 @@ QString Proc(QString message)
     return "false";
 }
 
+/*!
+ * \brief parser
+ * \param login
+ * \param password
+ * \return
+ * Парсер для подготовки сообщения авторизации
+ */
+
 QString parser(QString login, QString password)
 {
     return "auth&" + login + "&" + password;
 }
 
+/*!
+ * \brief parser
+ * \param login
+ * \param password
+ * \param email
+ * \param phone
+ * \return
+ * Парсер для подготовки сообщения регистрации
+ */
+
 QString parser(QString login, QString password, QString email, QString phone)
 {
     return "reg&" + login + "&" + password + "&" + email + "&" + phone;
 }
+
+/*!
+ * \brief parser
+ * \param map
+ * \return
+ * Парсер для обработки полученных сообщений от сервера и перевода их в QString или QMap<int,QString>
+ */
 
 QString parser(QMap<int, QString> map)
 {

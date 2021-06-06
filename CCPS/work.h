@@ -5,6 +5,8 @@
 #include "functions.h"
 #include "clientstuff.h"
 #include <QMap>
+#include <QTableWidget>
+#include <QVBoxLayout>
 
 namespace Ui {
 class Work;
@@ -20,12 +22,20 @@ public:
 
 private slots:
 
-    void on_back_button_clicked();
     void getlistLobby(QMap<int, QString> map);
+    void createUI(const QStringList &headers);
+    void connectLobby(QTableWidget* table, int row);
+    void receivedSomething(QString msg);
+    void on_pushButton_Close_clicked();
+
+    void on_pushButton_Reload_clicked();
 
 private:
     Ui::Work *ui;
     clientStuff *client;
+    QWidget *mainWidget;
+    QTableWidget *tableWidget;
+    QVBoxLayout *vlayout;
 
 signals:
     void signM();

@@ -23,6 +23,11 @@ QString lobby::getReadyLobby()
 lobby::lobby(QString nameLobby)
 {
     name = nameLobby;
+
+    for(int i = 0; i < 9; i++)
+    {
+       player[i] = -1;
+    }
 }
 
 serverStuff::serverStuff(QObject *pwgt) : QObject(pwgt), m_nNextBlockSize(0)
@@ -36,30 +41,21 @@ serverStuff::serverStuff(QObject *pwgt) : QObject(pwgt), m_nNextBlockSize(0)
     db.setPassword("201-351");
     dbconnect = db.open();
 
-//    lobby* lob1 = new lobby("test1");
-//    lob1->player[0] = 1234;
-//    lob1->player[1] = 125435;
-//    lob1->player[2] = 134;
-//    lob1->readyLobby = false;
-//    curLobby[0] = lob1;
+    lobby* lob1 = new lobby("test1");
+    lob1->player[0] = 1234;
+    lob1->player[1] = 125435;
+    lob1->player[2] = 134;
+    lob1->readyLobby = false;
+    curLobby[0] = lob1;
 
-//    lobby* lob2 = new lobby("test2");
-//    lob2->player[0] = 1234;
-//    lob2->player[1] = 125435;
-//    lob2->player[2] = 134;
-//    lob2->player[3] = 123;
-//    lob2->player[4] = 15435;
-//    lob2->readyLobby = false;
-//    curLobby[1] = lob2;
-
-//    if (dbconnect) {
-//        QSqlQuery query("SELECT login, password FROM data_auth");
-//        while (query.next()) {
-//            QString login = query.value(0).toString();
-//            QString password = query.value(1).toString();
-//            emit gotNewMesssage(login + password);
-//        }
-//    }
+    lobby* lob2 = new lobby("test2");
+    lob2->player[0] = 1234;
+    lob2->player[1] = 125435;
+    lob2->player[2] = 134;
+    lob2->player[3] = 123;
+    lob2->player[4] = 15435;
+    lob2->readyLobby = false;
+    curLobby[1] = lob2;
 }
 
 QList<QTcpSocket *> serverStuff::getClients()
@@ -88,6 +84,7 @@ QMap<int, QString> serverStuff::getLobby()
         q++;
     }
 
+    //qDebug() << "QString map " << listLobby;
     return listLobby;
 }
 
@@ -151,13 +148,10 @@ void serverStuff::readClient()
             if (id != "") {
                 sendToClient(clientSocket, QMap<int, QString>{{0, "auth&" + id}});
                 emit gotNewMesssage("auth&" + id);
+            }else {
+                sendToClient(clientSocket, QMap<int, QString>{{0, "auth&false"}});
             }
-
-        }else
-        {
-            sendToClient(clientSocket, QMap<int, QString>{{0, "auth&false"}});
-           // sendToClient(clientSocket, QString("auth&false"));
-        }        
+        }
 
         if (action == "reg")
         {
@@ -173,27 +167,25 @@ void serverStuff::readClient()
                     id = query.value(0).toString();
                 }
 
-            if (id == "") {
+                if (id == "") {
 
-                QSqlQuery query;
-                query.prepare("INSERT INTO data_auth (login, password) VALUES (:login, :password) RETURNING id_user");
-                   query.bindValue(":login", login);
-                   query.bindValue(":password", password);
-                   query.exec();
+                    QSqlQuery query;
+                    query.prepare("INSERT INTO data_auth (login, password) VALUES (:login, :password) RETURNING id_user");
+                       query.bindValue(":login", login);
+                       query.bindValue(":password", password);
+                       query.exec();
 
-                   if (query.next()) {
-                       id = query.value(0).toString();
-                   }
+                       if (query.next()) {
+                           id = query.value(0).toString();
+                       }
 
-                   sendToClient(clientSocket, QMap<int, QString>{{0, "reg&" + id}});
-                emit gotNewMesssage("reg&" + id);
+                       sendToClient(clientSocket, QMap<int, QString>{{0, "reg&" + id}});
+                    emit gotNewMesssage("reg&" + id);
+                } else {
+                    sendToClient(clientSocket, QMap<int, QString>{{0, "reg&false"}});
+                }
+
             }
-
-            }
-
-        }else
-        {
-            sendToClient(clientSocket, QMap<int, QString>{{0, "reg&false"}});
         }
 
         if (action == "listLobby")
@@ -201,7 +193,7 @@ void serverStuff::readClient()
             sendToClient(clientSocket, getLobby());
         }
 
-        if (str == "cLobby&key&name")
+        if (action == "cLobby")
         {
             QString strkey = str.section("&", 1, 1);
             int key = strkey.toInt();
@@ -224,13 +216,14 @@ void serverStuff::readClient()
                        curLobby[int(curLobby.lastKey())+1] = newGame;
                        sendToClient(clientSocket, QMap<int, QString>{{0, "cLobby&true"}});
                       // sendToClient(clientSocket, QString("cLobby&true"));
-                    }else
-                    {
-                        lobby *Game = curLobby[key];
-                        int aPlayer = Game->getPlayer();
-                        if (aPlayer != 9) {
-                            Game->player[aPlayer+1]=(int)clientSocket->socketDescriptor();
-                           // sendToClient(clientSocket, QString("cLobby&true"));
+                   }
+                }else
+                   {
+                      lobby *Game = curLobby[key];
+                      int aPlayer = Game->getPlayer();
+                      if (aPlayer != 9) {
+                          Game->player[aPlayer]=(int)clientSocket->socketDescriptor();
+                         // sendToClient(clientSocket, QString("cLobby&true"));
                             sendToClient(clientSocket, QMap<int, QString>{{0, "cLobby&true"}});
                         } else
                         {
@@ -238,7 +231,7 @@ void serverStuff::readClient()
                            // sendToClient(clientSocket, QString("cLobby&false"));
                         }
                     }
-                }
+
             }
 
 
@@ -249,6 +242,7 @@ void serverStuff::readClient()
 void serverStuff::gotDisconnection()
 {
     clients.removeAt(clients.indexOf((QTcpSocket*)sender()));
+
     emit smbDisconnected();
 }
 
@@ -267,8 +261,9 @@ qint64 serverStuff::sendToClient(QTcpSocket* socket, QMap<int, QString> str)
       QByteArray arrblock;
       QDataStream sendStream(&arrblock, QIODevice::ReadWrite);
       sendStream << quint64(0) << str;
+
       sendStream.device()->seek(0);
-      sendStream << (quint64)(arrblock.size() - sizeof(quint64));
+      sendStream << (quint64)(arrblock.size() - sizeof(quint64));     
 
       return socket->write(arrblock);
 }
